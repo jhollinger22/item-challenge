@@ -9,14 +9,22 @@
     "start": "node dist/server.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p infrastructure",
+    "synth": "cd infrastructure && cdk synth --quiet",
+    "synth:prod": "cd infrastructure && cdk synth --quiet -c env=prod"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.163",
     "@types/node": "^20.14.9",
     "@vitest/ui": "^2.1.8",
+    "aws-cdk": "^2.1142.0",
+    "aws-cdk-lib": "^2.269.0",
+    "constructs": "^10.8.1",
+    "esbuild": "^0.28.2",
     "tsx": "^4.15.7",
     "typescript": "^5.5.2",
     "vitest": "^2.1.8"

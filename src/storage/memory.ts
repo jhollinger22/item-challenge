@@ -6,7 +6,14 @@
  */
 
 import { randomUUID } from 'crypto';
-import { ExamItem, CreateItemRequest, UpdateItemRequest, ListItemsQuery } from '../types/item.js';
+import {
+  ExamItem,
+  CreateItemRequest,
+  UpdateItemRequest,
+  ListItemsQuery,
+  ListItemsResult,
+} from '../types/item.js';
+import { InvalidCursorError } from './errors.js';
 import { ItemStorage } from './interface.js';
 
 export class MemoryStorage implements ItemStorage {
@@ -62,7 +69,7 @@ export class MemoryStorage implements ItemStorage {
     return updated;
   }
 
-  async listItems(query: ListItemsQuery): Promise<{ items: ExamItem[]; total: number }> {
+  async listItems(query: ListItemsQuery): Promise<ListItemsResult> {
     let items = Array.from(this.items.values());
 
     // Filter by subject
@@ -77,12 +84,16 @@ export class MemoryStorage implements ItemStorage {
 
     const total = items.length;
 
-    // Pagination
-    const offset = query.offset || 0;
+    // Pagination - cursor is just a base64 encoded offset here so the API
+    // contract matches the DynamoDB implementation (opaque nextCursor)
+    const offset = query.cursor ? decodeOffset(query.cursor) : query.offset || 0;
     const limit = query.limit || 10;
     items = items.slice(offset, offset + limit);
 
-    return { items, total };
+    const nextOffset = offset + limit;
+    const nextCursor = nextOffset < total ? Buffer.from(String(nextOffset)).toString('base64url') : undefined;
+
+    return { items, total, nextCursor };
   }
 
   async createVersion(id: string): Promise<ExamItem | null> {
@@ -111,4 +122,10 @@ export class MemoryStorage implements ItemStorage {
   async getAuditTrail(id: string): Promise<ExamItem[]> {
     return this.versions.get(id) || [];
   }
+}
+
+function decodeOffset(cursor: string): number {
+  const offset = Number(Buffer.from(cursor, 'base64url').toString('utf8'));
+  if (!Number.isInteger(offset) || offset < 0) throw new InvalidCursorError();
+  return offset;
 }

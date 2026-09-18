@@ -20,3 +20,4 @@ export function createStorage(): ItemStorage {
 }
 
 export * from './interface.js';
+export * from './errors.js';

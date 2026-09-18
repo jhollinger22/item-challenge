@@ -53,7 +53,14 @@ export interface UpdateItemRequest {
 
 export interface ListItemsQuery {
   limit?: number;
-  offset?: number;
+  offset?: number; // only used by MemoryStorage, prefer cursor
+  cursor?: string; // opaque pagination token returned as nextCursor
   subject?: string;
   status?: string;
+}
+
+export interface ListItemsResult {
+  items: ExamItem[];
+  total?: number; // not available from DynamoDB without a full scan
+  nextCursor?: string;
 }
